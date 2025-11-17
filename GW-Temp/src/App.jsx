@@ -49,7 +49,9 @@ function App() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Guess Who Board</h1>
+      <h1 className="text-3xl font-bold mb-2 text-gray-800">[ GUESS THE VTUBERS ]</h1>
+      <h1 className="text-1 text-gray-800">By Lia Nwe</h1>
+      <h1 className="text-1 text-gray-800 mb-5">Developed by REKAA_85</h1>
 
       {/* Grid limited to 5 cards per row */}
       <div className="inline-grid grid-cols-5 gap-6 justify-center">
