@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "/GW-Template-25/",
-});
+  base: '/GW-Template-25/' // <-- replace with your repo name
+})
