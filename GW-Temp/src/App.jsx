@@ -81,7 +81,7 @@ export default function App() {
     const str = path.split('/').pop().replace(/\.(png|jpg|jpeg|webp)$/i, '')
     const parts = str.split('||');
     const name = parts[0];
-    const artist = parts[1] || '---';
+    const artist = "Artist: " + (parts[1] || '---');
     const img  = characterImages[path].default
     return { name, img, artist}
   })
@@ -162,9 +162,9 @@ export default function App() {
         {/* ── Header ── */}
         <header className="hdr">
           <div>
-            <div className="brand-pill">VTuber Game</div>
+            <div className="brand-pill">Lia Presents...</div>
             <h1 className="brand-title">Guess the VTuber</h1>
-            <p className="brand-sub">v11.17 · By Lia Nwe · Developed by REKAA_85</p>
+            <p className="brand-sub">v03.26 · By LiaNweVT · Developed by REKAA_85</p>
           </div>
 
           <div className="btn-row">
