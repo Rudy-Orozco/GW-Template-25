@@ -1,0 +1,77 @@
+/* ── Buttons ── */
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--r-btn);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--bdr-s);
+  background: var(--surf);
+  color: var(--tx);
+  transition: all 0.18s var(--ease);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn:hover {
+  background: var(--surf-h);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Accent / primary */
+.btn-lime {
+  background: var(--green);
+  color: #0d0d0f;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.btn-lime:hover {
+  background: #d4ff1a;
+  border-color: transparent;
+}
+
+/* Hold-to-clear */
+.btn-clear {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-clear:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.btn-clear-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--red-bg);
+  pointer-events: none;
+  transition: width 0.05s linear;
+}
+
+/* Favorite toggle */
+.btn-fav.active {
+  background: var(--gold-bg);
+  border-color: var(--gold-border);
+  color: var(--gold);
+}

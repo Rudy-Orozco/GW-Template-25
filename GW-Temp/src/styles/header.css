@@ -1,0 +1,44 @@
+/* ── Header ── */
+
+.hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--bdr);
+}
+
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ff-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  padding: 4px 11px;
+  border-radius: 100px;
+  margin-bottom: 10px;
+}
+
+.brand-title {
+  font-family: var(--ff-display);
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--tx);
+  margin-bottom: 6px;
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--tx-d);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+}

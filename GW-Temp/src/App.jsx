@@ -1,68 +1,127 @@
 import { useState, useRef, useEffect } from "react"
 
-// Dynamically import all images from src/assets/characters
+import "./styles/tokens.css"
+import "./styles/layout.css"
+import "./styles/header.css"
+import "./styles/buttons.css"
+import "./styles/banner.css"
+import "./styles/cards.css"
+import "./styles/modals.css"
+
 const characterImages = import.meta.glob('./assets/characters/*.{png,jpg,jpeg,webp}', { eager: true })
 
-function App() {
+// ── SVG Icons ──────────────────────────────────────────────────────────────
+
+const IconSun = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+)
+
+const IconMoon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+)
+
+const IconSearch = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+)
+
+const IconStar = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+)
+
+const IconX = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+
+const IconCheck = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+
+const IconMinus = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+)
+
+const IconClose = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const HOW_TO = [
+  ["Click a card",        "Cycles the state: Normal → Eliminated (X) → Confirmed (O) → Normal."],
+  ["Quick-action tabs",   "Hover a card to reveal X, O, and Reset buttons on the right edge."],
+  ["Full image preview",  "Click the zoom icon on the top-left of any card to view it enlarged."],
+  ["Set Favorite",        "Activate 'Set Favorite', then click any card to mark it as your pick."],
+  ["Clear Board",         "Hold the Clear Board button until filled to reset everything."],
+]
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+export default function App() {
   const characters = Object.keys(characterImages).map((path) => {
     const name = path.split('/').pop().replace(/\.(png|jpg|jpeg|webp)$/i, '')
-    const img = characterImages[path].default
+    const img  = characterImages[path].default
     return { name, img }
   })
 
-  const [cardStates, setCardStates] = useState(
-    characters.reduce((acc, char) => {
-      acc[char.name] = 'normal'
-      return acc
-    }, {})
+  const [darkMode,    setDarkMode]    = useState(true)
+  const [cardStates,  setCardStates]  = useState(
+    characters.reduce((acc, c) => { acc[c.name] = 'normal'; return acc }, {})
   )
-  const [favoriteCard, setFavoriteCard] = useState(null)
-  const [showHowTo, setShowHowTo] = useState(false)
-  const [favoriteMode, setFavoriteMode] = useState(false)
-  const [holdProgress, setHoldProgress] = useState(0)
+  const [favoriteCard,  setFavoriteCard]  = useState(null)
+  const [favoriteMode,  setFavoriteMode]  = useState(false)
+  const [showHowTo,     setShowHowTo]     = useState(false)
+  const [holdProgress,  setHoldProgress]  = useState(0)
+  const [modalImage,    setModalImage]    = useState(null)
+  const [modalVisible,  setModalVisible]  = useState(false)
+
   const holdInterval = useRef(null)
 
-  // Modal states
-  const [modalImage, setModalImage] = useState(null)
-  const [modalVisible, setModalVisible] = useState(false)
-
-  const toggleCardState = (name) => {
+  // Card click — cycle state or assign favorite
+  const toggleCard = (name) => {
     if (favoriteMode) {
       setFavoriteCard(name)
       setFavoriteMode(false)
       return
     }
-
-    setCardStates((prev) => {
-      const nextState =
-        prev[name] === 'normal' ? 'red' : prev[name] === 'red' ? 'green' : 'normal'
-      return { ...prev, [name]: nextState }
-    })
+    setCardStates(prev => ({
+      ...prev,
+      [name]: prev[name] === 'normal' ? 'red' : prev[name] === 'red' ? 'green' : 'normal',
+    }))
   }
 
+  // Hold-to-clear
   const clearBoard = () => {
-    setCardStates(
-      characters.reduce((acc, char) => {
-        acc[char.name] = 'normal'
-        return acc
-      }, {})
-    )
+    setCardStates(characters.reduce((acc, c) => { acc[c.name] = 'normal'; return acc }, {}))
     setFavoriteCard(null)
     setFavoriteMode(false)
   }
 
   const startHold = () => {
-    const startTime = Date.now()
-    const duration = 1000
+    const t0 = Date.now()
     holdInterval.current = setInterval(() => {
-      const elapsed = Date.now() - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      setHoldProgress(progress * 100)
-      if (progress >= 1) {
-        clearInterval(holdInterval.current)
-        setHoldProgress(0)
-        clearBoard()
-      }
+      const p = Math.min((Date.now() - t0) / 1000, 1)
+      setHoldProgress(p * 100)
+      if (p >= 1) { clearInterval(holdInterval.current); setHoldProgress(0); clearBoard() }
     }, 50)
   }
 
@@ -71,272 +130,206 @@ function App() {
     setHoldProgress(0)
   }
 
-  const getBgClass = (state, name) => {
-    if (name === favoriteCard) return 'bg-yellow-500'
-    if (favoriteMode && name !== favoriteCard) return 'hover:bg-yellow-200/40'
-    if (state === 'red') return 'bg-red-500'
-    if (state === 'green') return 'bg-green-600'
-    return 'bg-white/20'
-  }
-
-  const getOverlay = (state) => {
-    if (state === 'red')
-      return (
-        <span
-          className="absolute text-9xl font-bold pointer-events-none select-none"
-          style={{
-            color: '#ff4d4d',
-            textShadow: `
-              -2px -2px 0 #ffffff,
-              2px -2px 0 #ffffff,
-              -2px  2px 0 #ffffff,
-              2px  2px 0 #ffffff
-            `,
-          }}
-        >
-          ×
-        </span>
-      )
-    if (state === 'green')
-      return (
-        <span
-          className="absolute text-8xl font-bold pointer-events-none select-none"
-          style={{
-            color: '#00ff00',
-            textShadow: `
-              -2px -2px 0 #ffffff,
-              2px -2px 0 #ffffff,
-              -2px  2px 0 #ffffff,
-              2px  2px 0 #ffffff
-            `,
-          }}
-        >
-          ◯
-        </span>
-      )
-    return null
-  }
-
-  // Animate modal removal
+  // Delayed modal unmount (allows fade-out animation to finish)
   useEffect(() => {
     if (!modalVisible && modalImage) {
-      const timer = setTimeout(() => setModalImage(null), 300)
-      return () => clearTimeout(timer)
+      const t = setTimeout(() => setModalImage(null), 280)
+      return () => clearTimeout(t)
     }
   }, [modalVisible])
 
+  // Derive card CSS class from state
+  const cardClass = (name) => {
+    if (name === favoriteCard)        return 's-fav'
+    if (cardStates[name] === 'red')   return 's-red'
+    if (cardStates[name] === 'green') return 's-green'
+    return ''
+  }
+
+  // Open image modal
+  const openModal = (img) => {
+    setModalImage(img)
+    setTimeout(() => setModalVisible(true), 10)
+  }
+
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black to-gray-700"></div>
+    <div className={`app ${darkMode ? 'dark' : 'light'}`}>
+      <div className="wrap">
 
-      {/* Top bar */}
-      <div className="w-full max-w-[1450px] flex justify-between items-center z-10 mb-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-1 text-white">| GUESS THE VTUBER |</h1>
-          <h1 className="text-white text-xs mb-2">Version 11.17</h1>
-          <h1 className="text-white">By Lia Nwe</h1>
-          <h1 className="text-white mb-2">Developed by REKAA_85</h1>
-        </div>
+        {/* ── Header ── */}
+        <header className="hdr">
+          <div>
+            <div className="brand-pill">VTuber Game</div>
+            <h1 className="brand-title">Guess the VTuber</h1>
+            <p className="brand-sub">v11.17 · By Lia Nwe · Developed by REKAA_85</p>
+          </div>
 
-        <div className="flex space-x-2">
-          {/* Hold-to-clear button */}
-          <div className="relative w-32">
+          <div className="btn-row">
+            <button className="btn" onClick={() => setDarkMode(d => !d)}>
+              {darkMode ? <IconSun /> : <IconMoon />}
+              {darkMode ? 'Light' : 'Dark'}
+            </button>
+
             <button
+              className="btn btn-clear"
               onMouseDown={startHold}
               onMouseUp={endHold}
               onMouseLeave={endHold}
-              className="w-full px-4 py-2 bg-red-600 text-white font-semibold rounded shadow hover:bg-red-700 transition relative overflow-hidden"
             >
-              Clear Board
-              <div
-                className="absolute top-0 left-0 h-full bg-red-400/50 pointer-events-none transition-all"
-                style={{ width: `${holdProgress}%` }}
-              ></div>
-            </button>
-          </div>
-
-          <button
-            onClick={() => setFavoriteMode(!favoriteMode)}
-            className={`px-4 py-2 font-semibold rounded shadow transition ${
-              favoriteMode ? 'bg-yellow-500 text-black' : 'bg-yellow-400 text-black hover:bg-yellow-500'
-            }`}
-          >
-            Set Favorite
-          </button>
-
-          <button
-            onClick={() => setShowHowTo(true)}
-            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded shadow hover:bg-blue-700 transition"
-          >
-            How to Play
-          </button>
-        </div>
-      </div>
-
-      {/* Favorite Card Display */}
-      <div className="w-full max-w-[1450px] flex justify-center items-center z-10 mb-4">
-        <h2 className="text-3xl font-semibold text-white mb-5">
-          Your Vtuber is: <span className="text-yellow-400">{favoriteCard || "None"}</span>
-        </h2>
-      </div>
-
-      {/* Grid of cards */}
-      <div className="inline-grid grid-cols-5 gap-6 justify-center z-10">
-        {characters.map((char) => (
-          <div
-            key={char.name}
-            onClick={() => toggleCardState(char.name)}
-            className={`group relative p-4 rounded-xl flex flex-col items-center cursor-pointer hover:scale-105 transform transition select-none border border-white/20 backdrop-blur-md shadow-lg ${
-              getBgClass(cardStates[char.name], char.name)
-            }`}
-          >
-            {/* Favorite star */}
-            {favoriteCard === char.name && (
-              <span className="absolute top-2 right-2 text-2xl text-yellow-400 drop-shadow-lg z-20">
-                ⭐
+              <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                Clear Board
+                <span style={{ fontSize: 11, opacity: 0.45 }}>hold</span>
               </span>
-            )}
-
-            {/* Magnifying glass button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setModalImage(char.img) // mount first
-                setTimeout(() => setModalVisible(true), 10) // trigger animation next tick
-              }}
-              className="absolute top-2 left-2 w-6 h-6 flex items-center justify-center bg-black bg-opacity-60 text-white text-sm rounded-full hover:bg-opacity-80 transition leading-none z-20"
-            >
-              🔍
+              <div className="btn-clear-fill" style={{ width: `${holdProgress}%` }} />
             </button>
 
+            <button
+              className={`btn btn-fav ${favoriteMode ? 'active' : ''}`}
+              onClick={() => setFavoriteMode(m => !m)}
+            >
+              <IconStar />
+              {favoriteMode ? 'Selecting…' : 'Set Favorite'}
+            </button>
 
-            {/* Image */}
-            <div className={`relative w-36 h-36 mb-2 flex items-center justify-center rounded-lg overflow-hidden bg-white/10`}>
-              <img src={char.img} alt={char.name} className="max-w-full max-h-full object-contain select-none" />
-              {getOverlay(cardStates[char.name])}
-            </div>
-
-            {/* Title Box */}
-            <div className="bg-black bg-opacity-60 px-2 py-1 rounded">
-              <p className="font-semibold text-white">{char.name}</p>
-            </div>
-
-            {/* RIGHT-SIDE BOOK TABS (appear on hover) */}
-            <div className="absolute top-0 right-0 flex flex-col h-full justify-center space-y-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setCardStates((prev) => ({ ...prev, [char.name]: "red" }))
-                }}
-                className="w-6 h-12 bg-red-500 text-white font-bold rounded-l hover:bg-red-600 transition text-sm pointer-events-auto"
-              >
-                X
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setCardStates((prev) => ({ ...prev, [char.name]: "green" }))
-                }}
-                className="w-6 h-12 bg-green-500 text-white font-bold rounded-l hover:bg-green-600 transition text-sm pointer-events-auto"
-              >
-                O
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setCardStates((prev) => ({ ...prev, [char.name]: "normal" }))
-                }}
-                className="w-6 h-12 bg-blue-300 text-blue-900 font-bold rounded-l hover:bg-blue-400 transition text-sm pointer-events-auto"
-              >
-                -
-              </button>
-            </div>
+            <button className="btn btn-lime" onClick={() => setShowHowTo(true)}>
+              How to Play
+            </button>
           </div>
-        ))}
+        </header>
+
+        {/* ── Favorite banner ── */}
+        <div className="fav-banner">
+          <span className="fav-label">Your VTuber</span>
+          <div className="fav-divider" />
+          {favoriteCard
+            ? <span className="fav-name">{favoriteCard}</span>
+            : <span className="fav-none">None selected</span>
+          }
+        </div>
+
+        {/* ── Card grid ── */}
+        <div className="grid">
+          {characters.map((char) => (
+            <div
+              key={char.name}
+              className={`card ${cardClass(char.name)}`}
+              onClick={() => toggleCard(char.name)}
+            >
+              {/* Favorite chip */}
+              {favoriteCard === char.name && (
+                <div className="c-fav-chip"><IconStar size={11} /></div>
+              )}
+
+              {/* Zoom button */}
+              <button
+                className="c-zoom"
+                onClick={(e) => { e.stopPropagation(); openModal(char.img) }}
+              >
+                <IconSearch />
+              </button>
+
+              {/* Image + state overlay */}
+              <div className="c-img-wrap">
+                <img src={char.img} alt={char.name} draggable={false} />
+                {cardStates[char.name] === 'red' && (
+                  <div className="state-ov">
+                    <div className="badge-x"><IconX size={20} /></div>
+                  </div>
+                )}
+                {cardStates[char.name] === 'green' && (
+                  <div className="state-ov">
+                    <div className="badge-o"><IconCheck size={20} /></div>
+                  </div>
+                )}
+              </div>
+
+              {/* Name */}
+              <p className="c-name">{char.name}</p>
+
+              {/* Side action tabs */}
+              <div className="side-tabs">
+                <button
+                  className="stab stab-x"
+                  onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'red' })) }}
+                >
+                  <IconX />
+                </button>
+                <button
+                  className="stab stab-o"
+                  onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'green' })) }}
+                >
+                  <IconCheck />
+                </button>
+                <button
+                  className="stab stab-r"
+                  onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'normal' })) }}
+                >
+                  <IconMinus />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Footer ── */}
+        <footer className="footer">
+          <p>© 2025 REKAA_85. All rights reserved for the original code, web design, and modifications.</p>
+          <p>Third-party assets are used with permission and remain the property of their original owners/creators.</p>
+          <p>No part of this project may be reproduced or modified without explicit authorization. AI training is strictly forbidden.</p>
+        </footer>
+
       </div>
 
-        {/* Fullscreen animated modal viewer */}
-        {modalImage && (
-          <div
-            className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ${
-              modalVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
-            onClick={() => setModalVisible(false)}
-            style={{ cursor: 'default', userSelect: 'none' }} // <- prevents blinking text cursor
-          >
-            <div
-              className={`bg-white p-4 rounded-lg shadow-xl max-w-screen-md max-h-[90vh] flex flex-col items-center transform transition-transform duration-300 ${
-                modalVisible ? 'scale-100' : 'scale-75'
-              }`}
-              onClick={(e) => e.stopPropagation()}
-              style={{ cursor: 'default', userSelect: 'none' }} // <- prevents selection
-            >
-              <img
-                src={modalImage}
-                alt="Full size"
-                className="object-contain max-w-full max-h-[80vh] select-none"
-                style={{ cursor: 'default', userSelect: 'none' }} // <- prevents blinking cursor over image
-              />
-              <button
-                className="mt-4 w-full py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                onClick={() => setModalVisible(false)}
-              >
-                Close
+      {/* ── Image preview modal ── */}
+      {modalImage && (
+        <div
+          className={`mbackdrop ${modalVisible ? '' : 'out'}`}
+          onClick={() => setModalVisible(false)}
+        >
+          <div className="mbox" onClick={(e) => e.stopPropagation()}>
+            <div className="mhdr">
+              <span className="mtitle">Preview</span>
+              <button className="mclose" onClick={() => setModalVisible(false)}>
+                <IconClose />
               </button>
             </div>
-          </div>
-        )}
-
-
-        {/* How to Play Modal */}
-        {showHowTo && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowHowTo(false)}
-            style={{ cursor: 'default', userSelect: 'none' }}
-          >
-            <div
-              className="bg-gray-900 text-white p-6 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-3xl font-bold mb-6 text-yellow-400 text-center">How to Play</h2>
-              <ol className="list-decimal list-inside space-y-4 text-lg">
-                <li>
-                  <span className="font-semibold">Click a card:</span> Cycles its state → Normal → X (red) → O (green) → Normal.
-                </li>
-                <li>
-                  <span className="font-semibold">Quick-action tabs:</span> Hover over a card to see X, O, or - buttons for instant state changes.
-                </li>
-                <li>
-                  <span className="font-semibold">View larger image:</span> Click the magnifying glass 🔍 to open a full-size preview.
-                </li>
-                <li>
-                  <span className="font-semibold">Set Favorite:</span> Click "Set Favorite" to activate favorite mode, then click a card to mark it as favorite.
-                </li>
-                <li>
-                  <span className="font-semibold">Clear Board:</span> Hold the "Clear Board" button for 3 seconds to reset all cards and remove your favorite card.
-                </li>
-              </ol>
-              <button
-                className="mt-6 w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-600 transition-all"
-                onClick={() => setShowHowTo(false)}
-              >
-                Got it!
-              </button>
+            <div className="mimg">
+              <img src={modalImage} alt="Preview" draggable={false} />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-      {/* Footer */}
-      <footer className="w-full mt-8 text-center text-white text-sm opacity-70 space-y-1">
-        <div>© 2025 REKAA_85. All rights reserved for the original code, web design, and modifications.</div>
-        <div>Third-party assets including artwork are used with permission from their respective owners/creators and remain the property of their original owners/creators.</div>
-        <div>No part of this project may be reproduced, distributed, or modified without explicit authorization. AI training is strictly forbidden.</div>
-      </footer>
+      {/* ── How to Play modal ── */}
+      {showHowTo && (
+        <div className="mbackdrop" onClick={() => setShowHowTo(false)}>
+          <div className="mbox" onClick={(e) => e.stopPropagation()}>
+            <div className="mhdr">
+              <span className="mtitle">How to Play</span>
+              <button className="mclose" onClick={() => setShowHowTo(false)}>
+                <IconClose />
+              </button>
+            </div>
 
+            <div className="htp-list">
+              {HOW_TO.map(([title, desc], i) => (
+                <div className="htp-item" key={i}>
+                  <div className="htp-num">{i + 1}</div>
+                  <p className="htp-text"><strong>{title} — </strong>{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="btn btn-lime"
+              style={{ width: '100%', justifyContent: 'center', padding: '11px' }}
+              onClick={() => setShowHowTo(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
-export default App

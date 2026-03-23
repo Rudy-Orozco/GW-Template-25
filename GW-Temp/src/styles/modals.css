@@ -1,0 +1,136 @@
+/* ── Modal shared ── */
+
+.mbackdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+  transition: opacity 0.25s ease;
+}
+
+.mbackdrop.out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mbox {
+  background: var(--modal);
+  border: 1px solid var(--bdr-s);
+  border-radius: 20px;
+  padding: 22px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transform: scale(1);
+  transition: transform 0.25s var(--ease);
+}
+
+.mbackdrop.out .mbox {
+  transform: scale(0.93);
+}
+
+.mhdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mtitle {
+  font-family: var(--ff-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: -0.02em;
+}
+
+.mclose {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--bdr);
+  background: var(--surf);
+  color: var(--tx-m);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+
+.mclose:hover {
+  background: var(--surf-h);
+  color: var(--tx);
+}
+
+/* ── Image preview modal ── */
+
+.mimg {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surf);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mimg img {
+  max-width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
+  display: block;
+  border-radius: 10px;
+}
+
+/* ── How to Play modal ── */
+
+.htp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.htp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 13px;
+  border-radius: 11px;
+  border: 1px solid var(--bdr);
+  background: var(--surf);
+}
+
+.htp-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.htp-text {
+  font-size: 13px;
+  color: var(--tx-m);
+  line-height: 1.65;
+}
+
+.htp-text strong {
+  color: var(--tx);
+  font-weight: 500;
+}
