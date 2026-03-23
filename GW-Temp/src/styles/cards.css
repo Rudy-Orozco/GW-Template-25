@@ -166,6 +166,16 @@
   line-height: 1.3;
 }
 
+.c-artist {
+  font-family: var(--ff-display);
+  font-size: 10px;
+  font-weight: 200;
+  color: var(--tx-artist);
+  letter-spacing: -0.01em;
+  text-align: center;
+  line-height: 1.3;
+}
+
 /* ── Side action tabs ── */
 
 .side-tabs {

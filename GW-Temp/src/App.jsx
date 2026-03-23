@@ -78,9 +78,12 @@ const HOW_TO = [
 
 export default function App() {
   const characters = Object.keys(characterImages).map((path) => {
-    const name = path.split('/').pop().replace(/\.(png|jpg|jpeg|webp)$/i, '')
+    const str = path.split('/').pop().replace(/\.(png|jpg|jpeg|webp)$/i, '')
+    const parts = str.split('||');
+    const name = parts[0];
+    const artist = parts[1] || '---';
     const img  = characterImages[path].default
-    return { name, img }
+    return { name, img, artist}
   })
 
   const [darkMode,    setDarkMode]    = useState(true)
@@ -243,8 +246,9 @@ export default function App() {
                 )}
               </div>
 
-              {/* Name */}
+              {/* Name & Artist */}
               <p className="c-name">{char.name}</p>
+              <p className="c-artist">{char.artist}</p>
 
               {/* Side action tabs */}
               <div className="side-tabs">
