@@ -76,7 +76,7 @@ const HOW_TO = [
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export default function App() {
+export default function App() {   
   const characters = Object.keys(characterImages).map((path) => {
     const str = path.split('/').pop().replace(/\.(png|jpg|jpeg|webp)$/i, '')
     const parts = str.split('||');
