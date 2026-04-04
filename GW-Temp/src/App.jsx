@@ -10,6 +10,14 @@ import "./styles/modals.css"
 
 const characterImages = import.meta.glob('./assets/characters/*.{png,jpg,jpeg,webp}', { eager: true })
 
+// ── Config ─────────────────────────────────────────────────────────────────
+// Edit BOARD_SIZE to control how many character cards appear per game.
+// Must be <= total number of character images available.
+
+const CONFIG = {
+  BOARD_SIZE: 5,
+}
+
 // ── SVG Icons ──────────────────────────────────────────────────────────────
 
 const IconSun = () => (
@@ -64,6 +72,24 @@ const IconClose = () => (
   </svg>
 )
 
+const IconLink = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+  </svg>
+)
+
+const IconDice = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="3"/>
+    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+  </svg>
+)
+
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const HOW_TO = [
@@ -72,34 +98,125 @@ const HOW_TO = [
   ["Full image preview",  "Click the zoom icon on the top-left of any card to view it enlarged."],
   ["Set Favorite",        "Activate 'Set Favorite', then click any card to mark it as your pick."],
   ["Clear Board",         "Hold the Clear Board button until filled to reset everything."],
+  ["Seed / Share",        "Copy the share link so others load the exact same randomized board. Enter a seed manually to match a friend's game."],
 ]
+
+// ── Seeded RNG ─────────────────────────────────────────────────────────────
+// Uses FNV-1a hashing + mulberry32 PRNG for fully deterministic shuffles.
+
+function hashSeed(str) {
+  let h = 2166136261 >>> 0
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = Math.imul(h, 16777619) >>> 0
+  }
+  return h
+}
+
+function mulberry32(seedStr) {
+  let s = hashSeed(String(seedStr))
+  return () => {
+    s |= 0
+    s = (s + 0x6D2B79F5) | 0
+    let t = Math.imul(s ^ (s >>> 15), 1 | s)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function seededShuffle(arr, seedStr) {
+  const rand = mulberry32(seedStr)
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+function generateSeed() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
+
+function getSeedFromURL() {
+  return new URLSearchParams(window.location.search).get('seed') || null
+}
+
+function buildShareURL(seed) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('seed', seed)
+  return url.toString()
+}
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export default function App() {   
-  const characters = Object.keys(characterImages).map((path) => {
+export default function App() {
+  const allCharacters = Object.keys(characterImages).map((path) => {
     const str = path.split('/').pop().replace(/\.(png|jpg|jpeg|webp)$/i, '')
-    const parts = str.split('||');
-    const name = parts[0];
-    const artist = "Artist: " + (parts[1] || '---');
-    const img  = characterImages[path].default
-    return { name, img, artist}
+    const parts = str.split('||')
+    const name = parts[0]
+    const artist = "Artist: " + (parts[1] || '---')
+    const img = characterImages[path].default
+    return { name, img, artist }
   })
 
-  const [darkMode,    setDarkMode]    = useState(true)
-  const [cardStates,  setCardStates]  = useState(
+  // ── Seed state ────────────────────────────────────────────────────────────
+  const [seed, setSeed] = useState(() => getSeedFromURL() || generateSeed())
+  const [seedInput, setSeedInput] = useState('')
+  const [copied, setCopied] = useState(false)
+  const seedInputRef = useRef(null)
+
+  // Derive the board from the current seed
+  const characters = seededShuffle(allCharacters, seed).slice(0, CONFIG.BOARD_SIZE)
+
+  // Keep URL in sync with seed (no page reload)
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('seed', seed)
+    window.history.replaceState({}, '', url.toString())
+  }, [seed])
+
+  // ── Game state ────────────────────────────────────────────────────────────
+  const [darkMode,      setDarkMode]     = useState(true)
+  const [cardStates,    setCardStates]   = useState(() =>
     characters.reduce((acc, c) => { acc[c.name] = 'normal'; return acc }, {})
   )
-  const [favoriteCard,  setFavoriteCard]  = useState(null)
-  const [favoriteMode,  setFavoriteMode]  = useState(false)
-  const [showHowTo,     setShowHowTo]     = useState(false)
-  const [holdProgress,  setHoldProgress]  = useState(0)
-  const [modalImage,    setModalImage]    = useState(null)
-  const [modalVisible,  setModalVisible]  = useState(false)
+  const [favoriteCard,  setFavoriteCard] = useState(null)
+  const [favoriteMode,  setFavoriteMode] = useState(false)
+  const [showHowTo,     setShowHowTo]    = useState(false)
+  const [holdProgress,  setHoldProgress] = useState(0)
+  const [modalImage,    setModalImage]   = useState(null)
+  const [modalVisible,  setModalVisible] = useState(false)
 
   const holdInterval = useRef(null)
 
-  // Card click — cycle state or assign favorite
+  // Reset board whenever seed changes
+  useEffect(() => {
+    const newChars = seededShuffle(allCharacters, seed).slice(0, CONFIG.BOARD_SIZE)
+    setCardStates(newChars.reduce((acc, c) => { acc[c.name] = 'normal'; return acc }, {}))
+    setFavoriteCard(null)
+    setFavoriteMode(false)
+  }, [seed])
+
+  // ── Seed actions ──────────────────────────────────────────────────────────
+  const reroll = () => setSeed(generateSeed())
+
+  const applyInputSeed = () => {
+    const trimmed = seedInput.trim().toUpperCase()
+    if (trimmed.length > 0) {
+      setSeed(trimmed)
+      setSeedInput('')
+    }
+  }
+
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(buildShareURL(seed))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2200)
+  }
+
+  // ── Card actions ──────────────────────────────────────────────────────────
   const toggleCard = (name) => {
     if (favoriteMode) {
       setFavoriteCard(name)
@@ -112,7 +229,7 @@ export default function App() {
     }))
   }
 
-  // Hold-to-clear
+  // ── Hold-to-clear ─────────────────────────────────────────────────────────
   const clearBoard = () => {
     setCardStates(characters.reduce((acc, c) => { acc[c.name] = 'normal'; return acc }, {}))
     setFavoriteCard(null)
@@ -133,7 +250,7 @@ export default function App() {
     setHoldProgress(0)
   }
 
-  // Delayed modal unmount (allows fade-out animation to finish)
+  // ── Modal ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!modalVisible && modalImage) {
       const t = setTimeout(() => setModalImage(null), 280)
@@ -141,7 +258,12 @@ export default function App() {
     }
   }, [modalVisible])
 
-  // Derive card CSS class from state
+  const openModal = (img) => {
+    setModalImage(img)
+    setTimeout(() => setModalVisible(true), 10)
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const cardClass = (name) => {
     if (name === favoriteCard)        return 's-fav'
     if (cardStates[name] === 'red')   return 's-red'
@@ -149,12 +271,7 @@ export default function App() {
     return ''
   }
 
-  // Open image modal
-  const openModal = (img) => {
-    setModalImage(img)
-    setTimeout(() => setModalVisible(true), 10)
-  }
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={`app ${darkMode ? 'dark' : 'light'}`}>
       <div className="wrap">
@@ -167,6 +284,43 @@ export default function App() {
             <p className="brand-sub">v03.26 · By LiaNweVT · Developed by REKAA_85</p>
           </div>
 
+          <div className="hdr-controls">
+          {/* ── Seed row ── */}
+          <div className="seed-row">
+            <span className="seed-label">Board Seed</span>
+            <code className="seed-code">{seed}</code>
+
+            <button className="btn btn-seed-copy" onClick={copyShareLink} title="Copy share link">
+              {copied ? <IconCheck size={13} /> : <IconLink />}
+              {copied ? 'Copied!' : 'Share Link'}
+            </button>
+
+            <button className="btn btn-seed-reroll" onClick={reroll} title="Generate new random board">
+              <IconDice />
+              New Board
+            </button>
+
+            <div className="seed-input-group">
+              <input
+                ref={seedInputRef}
+                className="seed-input"
+                placeholder="Enter seed…"
+                value={seedInput}
+                maxLength={12}
+                onChange={e => setSeedInput(e.target.value.toUpperCase())}
+                onKeyDown={e => e.key === 'Enter' && applyInputSeed()}
+              />
+              <button
+                className="btn btn-seed-apply"
+                onClick={applyInputSeed}
+                disabled={!seedInput.trim()}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+
+          {/* ── Game buttons ── */}
           <div className="btn-row">
             <button className="btn" onClick={() => setDarkMode(d => !d)}>
               {darkMode ? <IconSun /> : <IconMoon />}
@@ -198,6 +352,7 @@ export default function App() {
               How to Play
             </button>
           </div>
+           </div>
         </header>
 
         {/* ── Favorite banner ── */}
