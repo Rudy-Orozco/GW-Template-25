@@ -15,7 +15,7 @@ const characterImages = import.meta.glob('./assets/characters/*.{png,jpg,jpeg,we
 // Must be <= total number of character images available.
 
 const CONFIG = {
-  BOARD_SIZE: 5,
+  BOARD_SIZE: 25,
 }
 
 // ── SVG Icons ──────────────────────────────────────────────────────────────
@@ -271,224 +271,249 @@ export default function App() {
     return ''
   }
 
+  // ── Intro ─────────────────────────────────────────────────────────────────
+  const [introVisible, setIntroVisible] = useState(true)
+  const [introGone,    setIntroGone]    = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setIntroVisible(false), 1800)
+    return () => clearTimeout(t)
+  }, [])
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className={`app ${darkMode ? 'dark' : 'light'}`}>
-      <div className="wrap">
-
-        {/* ── Header ── */}
-        <header className="hdr">
-          <div>
-            <div className="brand-pill">Lia Presents...</div>
-            <h1 className="brand-title">Guess the VTuber</h1>
-            <p className="brand-sub">v03.26 · By LiaNweVT · Developed by REKAA_85</p>
-          </div>
-
-          <div className="hdr-controls">
-          {/* ── Seed row ── */}
-          <div className="seed-row">
-            <span className="seed-label">Board Seed</span>
-            <code className="seed-code">{seed}</code>
-
-            <button className="btn btn-seed-copy" onClick={copyShareLink} title="Copy share link">
-              {copied ? <IconCheck size={13} /> : <IconLink />}
-              {copied ? 'Copied!' : 'Share Link'}
-            </button>
-
-            <button className="btn btn-seed-reroll" onClick={reroll} title="Generate new random board">
-              <IconDice />
-              New Board
-            </button>
-
-            <div className="seed-input-group">
-              <input
-                ref={seedInputRef}
-                className="seed-input"
-                placeholder="Enter seed…"
-                value={seedInput}
-                maxLength={12}
-                onChange={e => setSeedInput(e.target.value.toUpperCase())}
-                onKeyDown={e => e.key === 'Enter' && applyInputSeed()}
-              />
-              <button
-                className="btn btn-seed-apply"
-                onClick={applyInputSeed}
-                disabled={!seedInput.trim()}
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-
-          {/* ── Game buttons ── */}
-          <div className="btn-row">
-            <button className="btn" onClick={() => setDarkMode(d => !d)}>
-              {darkMode ? <IconSun /> : <IconMoon />}
-              {darkMode ? 'Light' : 'Dark'}
-            </button>
-
-            <button
-              className="btn btn-clear"
-              onMouseDown={startHold}
-              onMouseUp={endHold}
-              onMouseLeave={endHold}
-            >
-              <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-                Clear Board
-                <span style={{ fontSize: 11, opacity: 0.45 }}>hold</span>
-              </span>
-              <div className="btn-clear-fill" style={{ width: `${holdProgress}%` }} />
-            </button>
-
-            <button
-              className={`btn btn-fav ${favoriteMode ? 'active' : ''}`}
-              onClick={() => setFavoriteMode(m => !m)}
-            >
-              <IconStar />
-              {favoriteMode ? 'Selecting…' : 'Set Favorite'}
-            </button>
-
-            <button className="btn btn-lime" onClick={() => setShowHowTo(true)}>
-              How to Play
-            </button>
-          </div>
-           </div>
-        </header>
-
-        {/* ── Favorite banner ── */}
-        <div className="fav-banner">
-          <span className="fav-label">Your VTuber</span>
-          <div className="fav-divider" />
-          {favoriteCard
-            ? <span className="fav-name">{favoriteCard}</span>
-            : <span className="fav-none">None selected</span>
-          }
-        </div>
-
-        {/* ── Card grid ── */}
-        <div className="grid">
-          {characters.map((char) => (
-            <div
-              key={char.name}
-              className={`card ${cardClass(char.name)}`}
-              onClick={() => toggleCard(char.name)}
-            >
-              {/* Favorite chip */}
-              {favoriteCard === char.name && (
-                <div className="c-fav-chip"><IconStar size={11} /></div>
-              )}
-
-              {/* Zoom button */}
-              <button
-                className="c-zoom"
-                onClick={(e) => { e.stopPropagation(); openModal(char.img) }}
-              >
-                <IconSearch />
-              </button>
-
-              {/* Image + state overlay */}
-              <div className="c-img-wrap">
-                <img src={char.img} alt={char.name} draggable={false} />
-                {cardStates[char.name] === 'red' && (
-                  <div className="state-ov">
-                    <div className="badge-x"><IconX size={20} /></div>
-                  </div>
-                )}
-                {cardStates[char.name] === 'green' && (
-                  <div className="state-ov">
-                    <div className="badge-o"><IconCheck size={20} /></div>
-                  </div>
-                )}
-              </div>
-
-              {/* Name & Artist */}
-              <p className="c-name">{char.name}</p>
-              <p className="c-artist">{char.artist}</p>
-
-              {/* Side action tabs */}
-              <div className="side-tabs">
-                <button
-                  className="stab stab-x"
-                  onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'red' })) }}
-                >
-                  <IconX />
-                </button>
-                <button
-                  className="stab stab-o"
-                  onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'green' })) }}
-                >
-                  <IconCheck />
-                </button>
-                <button
-                  className="stab stab-r"
-                  onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'normal' })) }}
-                >
-                  <IconMinus />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Footer ── */}
-        <footer className="footer">
-          <p>© 2025 REKAA_85. All rights reserved for the original code, web design, and modifications.</p>
-          <p>Third-party assets are used with permission and remain the property of their original owners/creators.</p>
-          <p>No part of this project may be reproduced or modified without explicit authorization. AI training is strictly forbidden.</p>
-        </footer>
-
-      </div>
-
-      {/* ── Image preview modal ── */}
-      {modalImage && (
+    <>
+      {/* ── Intro overlay ── */}
+      {!introGone && (
         <div
-          className={`mbackdrop ${modalVisible ? '' : 'out'}`}
-          onClick={() => setModalVisible(false)}
+          className={`intro-overlay ${!introVisible ? 'out' : ''}`}
+          onAnimationEnd={() => { if (!introVisible) setIntroGone(true) }}
         >
-          <div className="mbox" onClick={(e) => e.stopPropagation()}>
-            <div className="mhdr">
-              <span className="mtitle">Preview</span>
-              <button className="mclose" onClick={() => setModalVisible(false)}>
-                <IconClose />
-              </button>
-            </div>
-            <div className="mimg">
-              <img src={modalImage} alt="Preview" draggable={false} />
-            </div>
+          <div className="intro-content">
+            <p className="intro-pill">Lia Presents...</p>
+            <h1 className="intro-title">Guess the VTuber</h1>
           </div>
         </div>
       )}
 
-      {/* ── How to Play modal ── */}
-      {showHowTo && (
-        <div className="mbackdrop" onClick={() => setShowHowTo(false)}>
-          <div className="mbox" onClick={(e) => e.stopPropagation()}>
-            <div className="mhdr">
-              <span className="mtitle">How to Play</span>
-              <button className="mclose" onClick={() => setShowHowTo(false)}>
-                <IconClose />
-              </button>
-            </div>
-
-            <div className="htp-list">
-              {HOW_TO.map(([title, desc], i) => (
-                <div className="htp-item" key={i}>
-                  <div className="htp-num">{i + 1}</div>
-                  <p className="htp-text"><strong>{title} — </strong>{desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <button
-              className="btn btn-lime"
-              style={{ width: '100%', justifyContent: 'center', padding: '11px' }}
-              onClick={() => setShowHowTo(false)}
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
+{/* ── Image preview modal ── */}
+{modalImage && (
+  <div
+    className={`mbackdrop ${modalVisible ? '' : 'out'} ${darkMode ? 'dark' : 'light'}`}
+    onClick={() => setModalVisible(false)}
+  >
+    <div className="mbox" onClick={(e) => e.stopPropagation()}>
+      <div className="mhdr">
+        <span className="mtitle">Preview</span>
+        <button className="mclose" onClick={() => setModalVisible(false)}>
+          <IconClose />
+        </button>
+      </div>
+      <div className="mimg">
+        <img src={modalImage} alt="Preview" draggable={false} />
+      </div>
     </div>
+  </div>
+)}
+
+{/* ── How to Play modal ── */}
+{showHowTo && (
+  <div
+    className={`mbackdrop ${darkMode ? 'dark' : 'light'}`}
+    onClick={() => setShowHowTo(false)}
+  >
+    <div className="mbox" onClick={(e) => e.stopPropagation()}>
+      <div className="mhdr">
+        <span className="mtitle">How to Play</span>
+        <button className="mclose" onClick={() => setShowHowTo(false)}>
+          <IconClose />
+        </button>
+      </div>
+      <div className="htp-list">
+        {HOW_TO.map(([title, desc], i) => (
+          <div className="htp-item" key={i}>
+            <div className="htp-num">{i + 1}</div>
+            <p className="htp-text"><strong>{title} — </strong>{desc}</p>
+          </div>
+        ))}
+      </div>
+      <button
+        className="btn btn-lime"
+        style={{ width: '100%', justifyContent: 'center', padding: '11px' }}
+        onClick={() => setShowHowTo(false)}
+      >
+        Got it
+      </button>
+    </div>
+  </div>
+)}
+      
+      <div className={`app ${darkMode ? 'dark' : 'light'}`}>
+        <div className="wrap">
+
+          {/* ── Header ── */}
+          <header className="hdr">
+            <div>
+              <div className="brand-pill">Lia Presents...</div>
+              <h1 className="brand-title">Guess the VTuber</h1>
+              <p className="brand-sub">v03.26 · By LiaNweVT · Developed by REKAA_85</p>
+            </div>
+
+            <div className="hdr-controls">
+            {/* ── Seed row ── */}
+            <div className="seed-row">
+              <span className="seed-label">Board Seed</span>
+              <code className="seed-code">{seed}</code>
+
+              <button className="btn btn-seed-copy" onClick={copyShareLink} title="Copy share link">
+                {copied ? <IconCheck size={13} /> : <IconLink />}
+                {copied ? 'Copied!' : 'Share Link'}
+              </button>
+
+              <button className="btn btn-seed-reroll" onClick={reroll} title="Generate new random board">
+                <IconDice />
+                New Board
+              </button>
+
+              <div className="seed-input-group">
+                <input
+                  ref={seedInputRef}
+                  className="seed-input"
+                  placeholder="Enter seed…"
+                  value={seedInput}
+                  maxLength={12}
+                  onChange={e => setSeedInput(e.target.value.toUpperCase())}
+                  onKeyDown={e => e.key === 'Enter' && applyInputSeed()}
+                />
+                <button
+                  className="btn btn-seed-apply"
+                  onClick={applyInputSeed}
+                  disabled={!seedInput.trim()}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            {/* ── Game buttons ── */}
+            <div className="btn-row">
+              <button className="btn" onClick={() => setDarkMode(d => !d)}>
+                {darkMode ? <IconSun /> : <IconMoon />}
+                {darkMode ? 'Light' : 'Dark'}
+              </button>
+
+              <button
+                className="btn btn-clear"
+                onMouseDown={startHold}
+                onMouseUp={endHold}
+                onMouseLeave={endHold}
+              >
+                <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  Clear Board
+                  <span style={{ fontSize: 11, opacity: 0.45 }}>hold</span>
+                </span>
+                <div className="btn-clear-fill" style={{ width: `${holdProgress}%` }} />
+              </button>
+
+              <button
+                className={`btn btn-fav ${favoriteMode ? 'active' : ''}`}
+                onClick={() => setFavoriteMode(m => !m)}
+              >
+                <IconStar />
+                {favoriteMode ? 'Selecting…' : 'Set Favorite'}
+              </button>
+
+              <button className="btn btn-lime" onClick={() => setShowHowTo(true)}>
+                How to Play
+              </button>
+            </div>
+            </div>
+          </header>
+
+          {/* ── Favorite banner ── */}
+          <div className="fav-banner">
+            <span className="fav-label">Your VTuber</span>
+            <div className="fav-divider" />
+            {favoriteCard
+              ? <span className="fav-name">{favoriteCard}</span>
+              : <span className="fav-none">None selected</span>
+            }
+          </div>
+
+          {/* ── Card grid ── */}
+          <div key={seed} className={`grid ${introGone ? 'ready' : ''}`}>
+            {characters.map((char) => (
+              <div
+                key={char.name}
+                className={`card ${cardClass(char.name)}`}
+                onClick={() => toggleCard(char.name)}
+              >
+                {/* Favorite chip */}
+                {favoriteCard === char.name && (
+                  <div className="c-fav-chip"><IconStar size={11} /></div>
+                )}
+
+                {/* Zoom button */}
+                <button
+                  className="c-zoom"
+                  onClick={(e) => { e.stopPropagation(); openModal(char.img) }}
+                >
+                  <IconSearch />
+                </button>
+
+                {/* Image + state overlay */}
+                <div className="c-img-wrap">
+                  <img src={char.img} alt={char.name} draggable={false} />
+                  {cardStates[char.name] === 'red' && (
+                    <div className="state-ov">
+                      <div className="badge-x"><IconX size={20} /></div>
+                    </div>
+                  )}
+                  {cardStates[char.name] === 'green' && (
+                    <div className="state-ov">
+                      <div className="badge-o"><IconCheck size={20} /></div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Name & Artist */}
+                <p className="c-name">{char.name}</p>
+                <p className="c-artist">{char.artist}</p>
+
+                {/* Side action tabs */}
+                <div className="side-tabs">
+                  <button
+                    className="stab stab-x"
+                    onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'red' })) }}
+                  >
+                    <IconX />
+                  </button>
+                  <button
+                    className="stab stab-o"
+                    onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'green' })) }}
+                  >
+                    <IconCheck />
+                  </button>
+                  <button
+                    className="stab stab-r"
+                    onClick={(e) => { e.stopPropagation(); setCardStates(p => ({ ...p, [char.name]: 'normal' })) }}
+                  >
+                    <IconMinus />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Footer ── */}
+          <footer className="footer">
+            <p>© 2025 REKAA_85. All rights reserved for the original code, web design, and modifications.</p>
+            <p>Third-party assets are used with permission and remain the property of their original owners/creators.</p>
+            <p>No part of this project may be reproduced or modified without explicit authorization. AI training is strictly forbidden.</p>
+          </footer>
+
+        </div>
+      </div>
+    </>
   )
 }
